@@ -58,8 +58,8 @@ class Maze(val dimx: Int, val dimy: Int, val start: Pair<Int, Int>, val end: Pai
         try {
             available[3] = grid[x][y - 1].filter { it != '_' }.toCharArray()
         } catch (e: ArrayIndexOutOfBoundsException) {}
-
-        return available.filter { it.isNotEmpty() }.shuffled()
+        // TODO somewhere along the way an array is getting filled with \u0000
+        return available.filter { it.isNotEmpty() && !it.contains('\u0000')}.shuffled()
     }
 
     fun dirToOff(dir: Char): Pair<Int, Int> {

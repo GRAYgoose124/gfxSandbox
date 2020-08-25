@@ -21,7 +21,7 @@ class mazeApp : PApplet() {
     }
 
     private lateinit var gfx: ToxiclibsSupport
-    private val maze = MazeGenerator.dfs(192, 108)
+    private var maze = MazeGenerator.dfs(192, 108)
     private var sx by Delegates.notNull<Float>()
     private var sy by Delegates.notNull<Float>()
 
@@ -38,26 +38,33 @@ class mazeApp : PApplet() {
 
     override fun draw() {
         background(255)
-        drawmaze(maze)
-        animatePath(maze.path)
+        drawmaze()
+        //animatePath(maze.path)
     }
 
-    fun drawmaze(maze: Maze) {
+    fun drawmaze() {
         stroke(0)
         fill(0)
         for (i in 0 until maze.dimx) {
             for (j in 0 until maze.dimy) {
                 val origin = Vec2D(i * sx, j * sy)
+                val r = Rect(origin, origin.add(sx, sy))
 
                 if (maze[i][j][4] == '_') {
-                    gfx.rect(Rect(origin, origin.add(sx, sy)))
+                    stroke(0)
+                    fill(0)
+                    gfx.rect(r)
                 } else {
                     stroke(0)
                     fill(255)
-                    gfx.rect(Rect(origin, origin.add(sx, sy)))
+                    gfx.rect(r)
                 }
             }
         }
+
+        maze = MazeGenerator.dfs(384, 216)
+        sx = (this.width / maze.dimx).toFloat()
+        sy = (this.height / maze.dimy).toFloat()
     }
 
     fun animatePath(path: MutableList<Pair<Int, Int>>) {
@@ -65,7 +72,7 @@ class mazeApp : PApplet() {
         fill(0)
 
         path.forEach { p ->
-            val origin = (Vec2D(p.first.toFloat(), p.second.toFloat()))
+            val origin = (Vec2D(p.first.toFloat() * sx, p.second.toFloat() * sx))
             val r = Rect(origin, origin.add(sx, sy))
             gfx.rect(r)
         }
