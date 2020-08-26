@@ -37,7 +37,7 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
         gfx = ToxiclibsSupport(this)
 
         // TODO: Change to perlin noise input or to RGB?
-         features = Array(25) {
+         features = Array(50) {
              //Vec3D((it * 20) % spaceSize.z, (it * 20) % spaceSize.y, (it * 20) % spaceSize.z)
             Vec3D(Random.nextInt(width).toFloat(),
                   Random.nextInt(height).toFloat(),
@@ -56,7 +56,7 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
 
         zOff = frameCount % spaceSize.z.toInt()
         if (frameCount == spaceSize.z.toInt()) {
-           noLoop()
+//           noLoop()
         }
     }
 
@@ -79,9 +79,9 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
                 distances.sort()
 
                 // Parameterizing colors using the noise computed.
-                var rt = distances[order] - (((distances[order+1]) * sin(distances[order])))
-                var gt = distances[order+1] - (((distances[order]) * cos(distances[order+1])))
-                var bt = distances[order+2] - (((distances[order]) * sin(distances[order])))
+                var rt = distances[order] - (((distances[order+1]) * (distances[order]) / spaceSize.x))
+                var gt = distances[order+1] - (((distances[order+2]) * sin(distances[order+1])))
+                var bt = distances[order+2] + (((distances[order]) * (distances[order+1]) / spaceSize.z))
                 val rtt = rt
                 val gtt = gt
                 val btt = bt
@@ -100,7 +100,7 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
         }
 
         updatePixels()
-        saveFrame("/seq/###.png")
+//        saveFrame("/seq/###.png")
     }
 
     fun debugDraw() {
@@ -129,7 +129,7 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
             if (zOff.toFloat() == it.z) {
                 fill(255f, 0f, 0f)
             }
-            gfx.circle(Vec2D(it.x, it.y), 5f)
+            gfx.circle(it.to2DXY(), 5f)
             text(frameRate.toString(), 20f, 20f)
         }
     }
