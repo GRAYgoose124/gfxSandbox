@@ -6,6 +6,10 @@ import toxi.geom.Vec3D
 import toxi.processing.ToxiclibsSupport
 import kotlin.random.Random
 
+import toxi.geom.PointQuadtree
+import toxi.geom.Sphere
+import kotlin.math.absoluteValue
+
 //TODO: shadify
 //TODO: quadtree
 
@@ -20,28 +24,27 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
         }
     }
 
-    lateinit var gfx: ToxiclibsSupport
-    lateinit var dim: Vec3D
-    var zdepth: Int = 0
-    var zOff: Int = 0
     lateinit var features: Array<Vec3D>
 
+    val spaceSize = Vec3D(1920f, 1080f, 50f)
+    var zOff: Int = 0
+    
     var DRAWMIDLINES: Boolean = false
+    lateinit var gfx: ToxiclibsSupport
 
     override fun settings() {
-        val s = Pair(400, 400)
-        size(s.first, s.second, P2D)
-        zdepth = 400
+        size(spaceSize.x.toInt(), spaceSize.y.toInt(), P3D)
         smooth(8)
     }
 
     override fun setup() {
         gfx = ToxiclibsSupport(this)
 
-         features = Array<Vec3D>(30) {
+        // TODO: Change to perlin noise input?
+         features = Array<Vec3D>(40) {
             Vec3D(Random.nextInt(width).toFloat(),
                 Random.nextInt(height).toFloat(),
-                Random.nextInt(zdepth).toFloat())
+                Random.nextInt(spaceSize.z.toInt()).toFloat())
         }
 
     }
@@ -52,9 +55,9 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
 
         noise(0)
         if (DRAWMIDLINES) drawFeatures()
-        zOff = frameCount % zdepth
-        if (frameCount == zdepth) {
-           // noLoop()
+        zOff = frameCount % spaceSize.z.toInt()
+        if (frameCount == spaceSize.z.toInt()) {
+           //noLoop()
         }
     }
 
@@ -63,6 +66,7 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
             'm' -> DRAWMIDLINES = !DRAWMIDLINES
         }
     }
+
 
     private fun noise(order: Int) {
         loadPixels()
@@ -74,30 +78,36 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
                     distances[i] = dist(x.toFloat(), y.toFloat(), zOff.toFloat(), p2.x, p2.y, p2.z)
                 }
                 distances.sort()
-                val rt = distances[order] * ((sin(distances[order+2]) + cos(distances[order])) / 2)
-                val gt = distances[order+1] * ((sin(distances[order+1]) + cos(distances[order+2])) / 2)
-                val bt = distances[order+2] * ((sin(distances[order]) + cos(distances[order])) / 2)
-                val r = map(rt, 0f, 255f, 0f, 200f)
-                val g = map(gt, 0f, 255f, 20f, 230f)
-                val b = map(bt, 0f, 255f, 100f, 250f)
+                var rt = distances[order] - (((distances[order+2]) * cos(distances[order])))
+                var gt = distances[order+1] - (((distances[order+1]) * sin(distances[order+2])))
+                var bt = distances[order+2] - (((distances[order]) * tan(distances[order])))
+                val rtt = rt
+                val gtt = gt
+                rt = (gt + bt) / 2
+                gt = (rtt + bt) / 2
+                bt = (gtt + rtt) / 2
+                val r = map(rt, 0f, 255f, 50f, 200f)
+                val g = map(gt, 0f, 255f, 0f, 180f)
+                val b = map(bt, 0f, 255f, 30f, 210f)
 
-                pixels[x + y * width] = color(r, g, b)
+                val c = color(r, g, b)
+                pixels[x + y * width] = c
             }
         }
 
         updatePixels()
-        // saveFrame()
+        //saveFrame()
     }
 
     fun drawFeatures() {
         val drawMidLines = {
             features.forEach { f1 ->
                 features.forEach { f2 ->
-                    val midpoint = f1.interpolateTo(f2, 0.5f)
+                    val midpoint = f1.interpolateTo(f2, 0.5f).to2DXY()
                     // val a = Vec2D((f2.x - f1.x), (f2.y - f1.y))
                     val b = Vec2D((f1.y - f2.y), (f2.x - f1.x)).normalize()
-                    val d = midpoint.to2DXY().add(b.scale(100f))
-                    line(midpoint.x, midpoint.y, d.x, d.y)
+                    val d = midpoint.add(b.scale(25f))
+                    gfx.line(midpoint, d)
                     // perhaps save list of midpoitns
                     // then midpoint of midpoints
                     // then draw mp-> mmp -> nmp
@@ -106,11 +116,17 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
         }
 
         stroke(0)
-        fill(0)
+        fill(0f, 255f, 0f)
         drawMidLines()
 
-        noStroke()
-        fill(255f, 0f, 0f)
-        features.forEach { circle(it.x, it.y, 5f) }
+
+        fill(0f, 255f, 0f)
+        features.forEach { it ->
+            if (zOff.toFloat() == it.z) {
+                fill(255f, 0f, 0f)
+            }
+            gfx.circle(Vec2D(it.x, it.y), 5f)
+            text(frameRate.toString(), 20f, 20f)
+        }
     }
 }
