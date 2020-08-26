@@ -6,10 +6,6 @@ import toxi.geom.Vec3D
 import toxi.processing.ToxiclibsSupport
 import kotlin.random.Random
 
-import toxi.geom.PointQuadtree
-import toxi.geom.Sphere
-import kotlin.math.absoluteValue
-
 //TODO: shadify
 //TODO: quadtree
 
@@ -26,10 +22,10 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
 
     lateinit var features: Array<Vec3D>
 
-    val spaceSize = Vec3D(1920f, 1080f, 50f)
+    val spaceSize = Vec3D(400f, 400f, 200f)
     var zOff: Int = 0
     
-    var DRAWMIDLINES: Boolean = false
+    var DRAWDEBUG: Boolean = false
     lateinit var gfx: ToxiclibsSupport
 
     override fun settings() {
@@ -40,52 +36,60 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
     override fun setup() {
         gfx = ToxiclibsSupport(this)
 
-        // TODO: Change to perlin noise input?
-         features = Array<Vec3D>(40) {
+        // TODO: Change to perlin noise input or to RGB?
+         features = Array(25) {
+             //Vec3D((it * 20) % spaceSize.z, (it * 20) % spaceSize.y, (it * 20) % spaceSize.z)
             Vec3D(Random.nextInt(width).toFloat(),
-                Random.nextInt(height).toFloat(),
-                Random.nextInt(spaceSize.z.toInt()).toFloat())
-        }
+                  Random.nextInt(height).toFloat(),
+                  Random.nextInt(spaceSize.z.toInt()).toFloat())
+         }
+
 
     }
 
     override fun draw() {
         background(0)
-        //worley(2, 0)
 
         noise(0)
-        if (DRAWMIDLINES) drawFeatures()
+
+        if (DRAWDEBUG) debugDraw()
+
         zOff = frameCount % spaceSize.z.toInt()
         if (frameCount == spaceSize.z.toInt()) {
-           //noLoop()
+           noLoop()
         }
     }
 
     override fun keyPressed() {
         when (key) {
-            'm' -> DRAWMIDLINES = !DRAWMIDLINES
+            'd' -> DRAWDEBUG = !DRAWDEBUG
         }
     }
-
 
     private fun noise(order: Int) {
         loadPixels()
         for (x in 0 until width) {
             for (y in 0 until height ) {
+                // Worley Noise Algorithm TODO: Octreeify
                 val distances = FloatArray(features.size)
-                for (i in 0 until features.size) {
+                for (i in features.indices) {
                     val p2 = features[i]
                     distances[i] = dist(x.toFloat(), y.toFloat(), zOff.toFloat(), p2.x, p2.y, p2.z)
                 }
                 distances.sort()
-                var rt = distances[order] - (((distances[order+2]) * cos(distances[order])))
-                var gt = distances[order+1] - (((distances[order+1]) * sin(distances[order+2])))
-                var bt = distances[order+2] - (((distances[order]) * tan(distances[order])))
+
+                // Parameterizing colors using the noise computed.
+                var rt = distances[order] - (((distances[order+1]) * sin(distances[order])))
+                var gt = distances[order+1] - (((distances[order]) * cos(distances[order+1])))
+                var bt = distances[order+2] - (((distances[order]) * sin(distances[order])))
                 val rtt = rt
                 val gtt = gt
-                rt = (gt + bt) / 2
-                gt = (rtt + bt) / 2
-                bt = (gtt + rtt) / 2
+                val btt = bt
+                rt = (gt * bt) / rt
+                gt = (rtt * bt) / gtt
+                bt = (gtt * rtt) / btt
+
+                // Map the distance to a color value and update the pixel.
                 val r = map(rt, 0f, 255f, 50f, 200f)
                 val g = map(gt, 0f, 255f, 0f, 180f)
                 val b = map(bt, 0f, 255f, 30f, 210f)
@@ -96,10 +100,10 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
         }
 
         updatePixels()
-        //saveFrame()
+        saveFrame("/seq/###.png")
     }
 
-    fun drawFeatures() {
+    fun debugDraw() {
         val drawMidLines = {
             features.forEach { f1 ->
                 features.forEach { f2 ->
