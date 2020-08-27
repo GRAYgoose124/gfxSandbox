@@ -21,11 +21,12 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
     }
 
     lateinit var features: Array<Vec3D>
-
-    val spaceSize = Vec3D(400f, 400f, 200f)
+    val spaceSize = Vec3D(1280f, 720f, 400f)
     var zOff: Int = 0
     
-    var DRAWDEBUG: Boolean = false
+    var bDRAWDEBUG: Boolean = false
+    var bSAVESEQ: Boolean = true
+
     lateinit var gfx: ToxiclibsSupport
 
     override fun settings() {
@@ -37,7 +38,7 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
         gfx = ToxiclibsSupport(this)
 
         // TODO: Change to perlin noise input or to RGB?
-         features = Array(50) {
+         features = Array(30) {
              //Vec3D((it * 20) % spaceSize.z, (it * 20) % spaceSize.y, (it * 20) % spaceSize.z)
             Vec3D(Random.nextInt(width).toFloat(),
                   Random.nextInt(height).toFloat(),
@@ -50,23 +51,28 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
     override fun draw() {
         background(0)
 
-        noise(0)
+        worleyNoise(0, bSAVESEQ)
 
-        if (DRAWDEBUG) debugDraw()
+        if (bDRAWDEBUG) debugDraw()
 
         zOff = frameCount % spaceSize.z.toInt()
-        if (frameCount == spaceSize.z.toInt()) {
-//           noLoop()
+        if (frameCount == spaceSize.z.toInt() && bSAVESEQ) {
+            noLoop()
         }
     }
 
     override fun keyPressed() {
         when (key) {
-            'd' -> DRAWDEBUG = !DRAWDEBUG
-        }
+            'd' -> bDRAWDEBUG = !bDRAWDEBUG
+            's' -> {
+                zOff = 0
+                bSAVESEQ = !bSAVESEQ
+            }
+         }
     }
 
-    private fun noise(order: Int) {
+    private fun worleyNoise(order: Int, save: Boolean=false) {
+
         loadPixels()
         for (x in 0 until width) {
             for (y in 0 until height ) {
@@ -79,20 +85,47 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
                 distances.sort()
 
                 // Parameterizing colors using the noise computed.
-                var rt = distances[order] - (((distances[order+1]) * (distances[order]) / spaceSize.x))
-                var gt = distances[order+1] - (((distances[order+2]) * sin(distances[order+1])))
-                var bt = distances[order+2] + (((distances[order]) * (distances[order+1]) / spaceSize.z))
+                var rt: Float = (distances[order] * cos(distances[order+1] * 0.05f))
+                var gt: Float = (distances[order] * sin(distances[order+2] * 0.05f))
+                var bt: Float = (distances[order] * cos(distances[order+3] * 0.05f))
+
                 val rtt = rt
                 val gtt = gt
                 val btt = bt
-                rt = (gt * bt) / rt
-                gt = (rtt * bt) / gtt
-                bt = (gtt * rtt) / btt
+
+                var qo = 1
+                var ro = 2
+                var so = 3
+                var t: Int
+                var t2: Int
+                for (i in 0 until distances.size-3) {
+                    rt += (distances[i] * sin(distances[i+qo] * 0.05f))
+                    bt += (distances[i] * cos(distances[i+ro]))
+                    gt += (distances[i] * sin(distances[i+so] * 0.3f))
+
+                    t = so
+                    so = qo
+                    t2 = qo
+                    qo = t
+                    ro = t2
+
+                }
+                rt /= distances.size
+                gt /= distances.size
+                bt /= distances.size
+
+
+                rt = rtt * bt / (rt)
+                gt = gtt * rt / (gt)
+                bt = btt * gt / (bt)
+//              rt = sin(gtt * btt * .001f) * rtt
+//              gt = sin(rtt * btt * .01f) * gtt
+//              bt = sin(gtt * rtt * .01f) * btt
 
                 // Map the distance to a color value and update the pixel.
-                val r = map(rt, 0f, 255f, 50f, 200f)
-                val g = map(gt, 0f, 255f, 0f, 180f)
-                val b = map(bt, 0f, 255f, 30f, 210f)
+                val r = map(rt, 0f, 255f, 0f, 255f)
+                val g = map(gt, 0f, 255f, 0f, 255f)
+                val b = map(bt, 0f, 255f, 0f, 255f)
 
                 val c = color(r, g, b)
                 pixels[x + y * width] = c
@@ -100,7 +133,8 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
         }
 
         updatePixels()
-//        saveFrame("/seq/###.png")
+        if (save) saveFrame("/seq/###.png")
+
     }
 
     fun debugDraw() {
