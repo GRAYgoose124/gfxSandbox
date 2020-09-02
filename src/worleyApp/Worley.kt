@@ -21,11 +21,12 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
     }
 
     lateinit var features: Array<Vec3D>
-    val spaceSize = Vec3D(1280f, 720f, 400f)
+    val spaceSize = Vec3D(400f, 400f, 1000f)
     var zOff: Int = 0
-    
+
     var bDRAWDEBUG: Boolean = false
-    var bSAVESEQ: Boolean = true
+    var bSAVESEQ: Boolean = false
+    var bBLENDNEIGHBORS: Boolean = false
 
     lateinit var gfx: ToxiclibsSupport
 
@@ -38,12 +39,14 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
         gfx = ToxiclibsSupport(this)
 
         // TODO: Change to perlin noise input or to RGB?
-         features = Array(30) {
-             //Vec3D((it * 20) % spaceSize.z, (it * 20) % spaceSize.y, (it * 20) % spaceSize.z)
-            Vec3D(Random.nextInt(width).toFloat(),
-                  Random.nextInt(height).toFloat(),
-                  Random.nextInt(spaceSize.z.toInt()).toFloat())
-         }
+        features = Array(80) {
+            //Vec3D((it * 20) % spaceSize.z, (it * 20) % spaceSize.y, (it * 20) % spaceSize.z)
+            Vec3D(
+                Random.nextInt(width).toFloat(),
+                Random.nextInt(height).toFloat(),
+                Random.nextInt(spaceSize.z.toInt()).toFloat()
+            )
+        }
 
 
     }
@@ -51,12 +54,13 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
     override fun draw() {
         background(0)
 
-        worleyNoise(0, bSAVESEQ)
+        worleyNoise(0, bSAVESEQ, bBLENDNEIGHBORS)
 
         if (bDRAWDEBUG) debugDraw()
 
         zOff = frameCount % spaceSize.z.toInt()
         if (frameCount == spaceSize.z.toInt() && bSAVESEQ) {
+            zOff = 0
             noLoop()
         }
     }
@@ -68,14 +72,15 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
                 zOff = 0
                 bSAVESEQ = !bSAVESEQ
             }
-         }
+            'b' -> bBLENDNEIGHBORS = !bBLENDNEIGHBORS
+        }
     }
 
-    private fun worleyNoise(order: Int, save: Boolean=false) {
+    private fun worleyNoise(order: Int, save: Boolean = false, blend: Boolean = false, blendDist: Int = 10, blendStr: Float = 0.1f) {
 
         loadPixels()
         for (x in 0 until width) {
-            for (y in 0 until height ) {
+            for (y in 0 until height) {
                 // Worley Noise Algorithm TODO: Octreeify
                 val distances = FloatArray(features.size)
                 for (i in features.indices) {
@@ -85,11 +90,11 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
                 distances.sort()
 
                 // Parameterizing colors using the noise computed.
-                var rt: Float = (distances[order] * cos(distances[order+1] * 0.05f))
-                var gt: Float = (distances[order] * sin(distances[order+2] * 0.05f))
-                var bt: Float = (distances[order] * cos(distances[order+3] * 0.05f))
+                var rt: Float = (distances[order] * cos(distances[order + 1] * 0.05f))
+                var gt: Float = (distances[order] * sin(distances[order + 2] * 0.05f))
+                var bt: Float = (distances[order] * cos(distances[order + 3] * 0.05f))
 
-                val rtt = rt
+                val rtt = rt * cos(pixels[x + y * width].toFloat()) // 2
                 val gtt = gt
                 val btt = bt
 
@@ -98,10 +103,10 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
                 var so = 3
                 var t: Int
                 var t2: Int
-                for (i in 0 until distances.size-3) {
-                    rt += (distances[i] * sin(distances[i+qo] * 0.05f))
-                    bt += (distances[i] * cos(distances[i+ro]))
-                    gt += (distances[i] * sin(distances[i+so] * 0.3f))
+                for (i in 0 until distances.size - 3) {
+                    rt += (distances[i] * sin(distances[i + qo] * 0.05f))
+                    bt += (distances[i] * cos(distances[i + ro]))
+                    gt += (distances[i] * sin(distances[i + so] * 0.3f))
 
                     t = so
                     so = qo
@@ -114,10 +119,10 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
                 gt /= distances.size
                 bt /= distances.size
 
-
-                rt = rtt * bt / (rt)
-                gt = gtt * rt / (gt)
-                bt = btt * gt / (bt)
+                rt = rtt * bt / (rt - gt)
+                gt = gtt * rt / (gt - bt)
+                bt = btt * gt / (bt - rt)
+                rt = cos(rtt) * rt * 2 - bt // 1
 //              rt = sin(gtt * btt * .001f) * rtt
 //              gt = sin(rtt * btt * .01f) * gtt
 //              bt = sin(gtt * rtt * .01f) * btt
@@ -131,6 +136,7 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
                 pixels[x + y * width] = c
             }
         }
+
 
         updatePixels()
         if (save) saveFrame("/seq/###.png")
@@ -166,5 +172,9 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
             gfx.circle(it.to2DXY(), 5f)
             text(frameRate.toString(), 20f, 20f)
         }
+    }
+
+    val blendNeighbors = { x: Int, y: Int, rad: Int, str: Float ->
+
     }
 }
