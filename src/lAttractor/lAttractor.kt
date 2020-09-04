@@ -1,15 +1,15 @@
-package gfxSandbox
+package lAttractor
 
 import processing.core.PApplet
 import toxi.processing.ToxiclibsSupport
 
-fun main() { gfxSandbox.run() }
+fun main() { lAttractor.run() }
 
 
-class gfxSandbox : PApplet() { // TODO: inherit from this by overloading and supering settings/setup/draw?
+class lAttractor : PApplet() {
     companion object {
         fun run() {
-            val app = gfxSandbox()
+            val app = lAttractor()
             app.runSketch()
         }
     }

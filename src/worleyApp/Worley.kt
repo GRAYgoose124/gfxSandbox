@@ -81,7 +81,7 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
         loadPixels()
         for (x in 0 until width) {
             for (y in 0 until height) {
-                // Worley Noise Algorithm TODO: Octreeify
+                // Worley Noise Algorithm TODO: Octreeify & move the basic algo to lib and param here.
                 val distances = FloatArray(features.size)
                 for (i in features.indices) {
                     val p2 = features[i]
