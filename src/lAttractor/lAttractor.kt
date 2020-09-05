@@ -1,30 +1,11 @@
 package lAttractor
 
-import processing.core.PApplet
-import toxi.processing.ToxiclibsSupport
+import gfxSandbox.GfxApp
 
-fun main() { lAttractor.run() }
+fun main() { lAttractor() }
 
 
-class lAttractor : PApplet() {
-    companion object {
-        fun run() {
-            val app = lAttractor()
-            app.runSketch()
-        }
-    }
-
-    lateinit var gfx: ToxiclibsSupport
-
-    override fun settings() {
-        fullScreen(P3D)
-        smooth(8)
-    }
-
-    override fun setup() {
-        gfx = ToxiclibsSupport(this)
-    }
-
+class lAttractor : GfxApp() {
     override fun draw() {
         background(0)
     }

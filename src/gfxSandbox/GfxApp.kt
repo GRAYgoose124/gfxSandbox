@@ -3,17 +3,10 @@ package gfxSandbox
 import processing.core.PApplet
 import toxi.processing.ToxiclibsSupport
 
-fun main() { gfxSandbox.run() }
+fun main() { App() }
 
 
-class gfxSandbox : PApplet() { // TODO: inherit from this by overloading and supering settings/setup/draw?
-    companion object {
-        fun run() {
-            val app = gfxSandbox()
-            app.runSketch()
-        }
-    }
-
+open class GfxApp : PApplet() { // TODO: inherit from this by overloading and supering settings/setup/draw?
     lateinit var gfx: ToxiclibsSupport
 
     override fun settings() {
@@ -27,5 +20,15 @@ class gfxSandbox : PApplet() { // TODO: inherit from this by overloading and sup
 
     override fun draw() {
         background(0)
+    }
+
+    init {
+        this.runSketch()
+    }
+}
+
+class App : GfxApp() {
+    override fun draw() {
+        background(255)
     }
 }

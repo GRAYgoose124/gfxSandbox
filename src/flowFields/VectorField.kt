@@ -5,26 +5,37 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 import kotlin.reflect.KFunction3
 
-class VectorField(dimx: Int, dimy: Int, dimz: Int, transform: KFunction3<Int, Int, Int, Array<Float>>) {
+class VectorField(val dimx: Int, val dimy: Int, val dimz: Int, var transform: KFunction3<Int, Int, Int, Array<Float>>) {
     private val options = Options()
 
     var vectors: MutableMap<Int, MutableMap<Int, MutableMap<Int, Vec3D>>> = mutableMapOf()
     var positions: MutableMap<Int, MutableMap<Int, MutableMap<Int, Vec3D>>> = mutableMapOf()
 
-    fun flowParticle(particle: Particle, iterations: Int = 1000): ArrayList<Vec3D> {
+    fun flowParticle(particle: Particle, iterations: Int): Iterator<Particle> {
+        return _flowParticle(particle, iterations).iterator()
+    }
+
+    fun _flowParticle(particle: Particle, iterations: Int) = sequence {
+        for (i in 0 until iterations) {
+            yield(stepParticle(particle))
+        }
+    }
+
+    fun stepParticle(particle: Particle): Particle {
         val forces = ArrayList<Vec3D>()
 
         val neighbors = neighborhood(particle)
         neighbors.forEach { (vector, distance) ->
-            forces.add(vector.scale(1 / distance)) //.normalizeTo(options.maxVelocity))
+            forces.add(vector.scale(1 / distance * neighbors.size)) //.normalizeTo(options.maxVelocity))
         }
 
-        for (i in 0..iterations) {
-            particle.update(forces, maxVelocity=options.maxVelocity)
-            particle.updateTrail(options.trailLength, options.trailSize)
-        }
 
-        return particle.trail
+        particle.update(forces, maxVelocity=options.maxVelocity)
+        particle.wrap(dimx * 5f)
+        particle.updateTrail(options.trailLength, options.trailSize)
+
+
+        return particle
     }
 
     private fun neighborhood(particle: Particle): MutableMap<Vec3D, Float> {

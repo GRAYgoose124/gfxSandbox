@@ -20,7 +20,11 @@ class Fields : PApplet() {
     var field: VectorField = VectorField(options.dim, options.dim, options.dim, ::recipIdent)
     var unitVector: Vec3D = Vec3D(options.vecScale, options.vecScale, options.vecScale)
 
-    var path: ArrayList<Vec3D>? = null
+    var particle: Particle = Particle(Random.nextFloat()*options.dim,
+                                      Random.nextFloat()*options.dim,
+                                      Random.nextFloat()*options.dim)
+    var path: ArrayList<Vec3D> = arrayListOf(particle)
+    var pathIter: Iterator<Particle> = field.flowParticle(particle, 500)
 
     companion object {
         fun run() {
@@ -39,11 +43,6 @@ class Fields : PApplet() {
         cam!!.set3DCamera(500.0, 0, 500, intArrayOf(this.width / 2, this.height / 2, 1000), true)
 
         gfx = ToxiclibsSupport(this)
-
-        val p = Particle(Random.nextFloat()*options.dim,
-                         Random.nextFloat()*options.dim,
-                         Random.nextFloat()*options.dim)
-
     }
 
     override fun draw() {
@@ -51,12 +50,12 @@ class Fields : PApplet() {
 
         if (!options.pause) {
             updatefieldVectors()
-            path = field.flowParticle(Particle(50.0f, 150.0f, 50.0f))
+            path.add(pathIter.next().copy())
         }
 
         if (options.grid) { drawfieldGrid() }
         if (options.vectors) { drawfieldVectors() }
-        if (options.path) { drawPath(path!!) }
+        if (options.path) { drawPath(path) }
     }
 
     fun drawPath(path: ArrayList<Vec3D>) {

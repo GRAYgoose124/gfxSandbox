@@ -3,10 +3,8 @@ package fields
 import toxi.geom.Vec3D
 import kotlin.math.pow
 
-class Particle(x: Float, y: Float, z: Float, acc: Vec3D = Vec3D(), vel: Vec3D = Vec3D()) : Vec3D() {
+class Particle(x: Float, y: Float, z: Float, var acc: Vec3D = Vec3D(), var vel: Vec3D = Vec3D()) : Vec3D() {
     var trail: ArrayList<Vec3D> = arrayListOf(this.copy())
-    var vel: Vec3D = vel
-    var acc: Vec3D = acc
 
     fun updateTrail(trailLength: Float = 40.0f, maxLength: Int = 100) {
         if (trail.size >= maxLength) {
@@ -30,8 +28,21 @@ class Particle(x: Float, y: Float, z: Float, acc: Vec3D = Vec3D(), vel: Vec3D = 
         return this
     }
 
+    fun wrap(dim: Float): Boolean {
+        var wrapped = true
+        when {
+            x < -dim -> x = dim
+            y < -dim -> y = dim
+            z < -dim -> z = dim
+            y > dim -> y = -dim
+            x > dim -> x = -dim
+            z > dim -> z = -dim
+            else -> wrapped = false
+        }
+        return wrapped
+    }
 
-    init {
+        init {
         this.x = x
         this.y = y
         this.z = z
