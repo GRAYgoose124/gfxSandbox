@@ -54,7 +54,7 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
     override fun draw() {
         background(0)
 
-        worleyNoise(0, bSAVESEQ, bBLENDNEIGHBORS)
+        genNoiseFrame(0, bSAVESEQ, bBLENDNEIGHBORS)
 
         if (bDRAWDEBUG) debugDraw()
 
@@ -75,20 +75,33 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
             'b' -> bBLENDNEIGHBORS = !bBLENDNEIGHBORS
         }
     }
+    private fun worleyNoise(sze: Int, width: Int, height: Int, order: Int, blend: Boolean = false, blendDist: Int = 10, blendStr: Float = 0.1f) = sequence {
+        features = Array(sze) {
+            //Vec3D((it * 20) % spaceSize.z, (it * 20) % spaceSize.y, (it * 20) % spaceSize.z)
+            Vec3D(
+                    Random.nextInt(width).toFloat(),
+                    Random.nextInt(height).toFloat(),
+                    Random.nextInt(spaceSize.z.toInt()).toFloat()
+            )
+        }
 
-    private fun worleyNoise(order: Int, save: Boolean = false, blend: Boolean = false, blendDist: Int = 10, blendStr: Float = 0.1f) {
-
-        loadPixels()
         for (x in 0 until width) {
             for (y in 0 until height) {
-                // Worley Noise Algorithm TODO: Octreeify & move the basic algo to lib and param here.
+                // Worley Noise Algorithm TODO: Octreeify
                 val distances = FloatArray(features.size)
                 for (i in features.indices) {
                     val p2 = features[i]
                     distances[i] = dist(x.toFloat(), y.toFloat(), zOff.toFloat(), p2.x, p2.y, p2.z)
                 }
                 distances.sort()
+                yield(Triple(x, y, distances))
+            }
+        }
+    }
 
+    private fun genNoiseFrame(order: Int, save: Boolean = false, blend: Boolean = false, blendDist: Int = 10, blendStr: Float = 0.1f) {
+        loadPixels()
+        for ((x, y, distances) in worleyNoise(20, width, height, 0)) {
                 // Parameterizing colors using the noise computed.
                 var rt: Float = (distances[order] * cos(distances[order + 1] * 0.05f))
                 var gt: Float = (distances[order] * sin(distances[order + 2] * 0.05f))
@@ -134,7 +147,6 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
 
                 val c = color(r, g, b)
                 pixels[x + y * width] = c
-            }
         }
 
 
@@ -178,3 +190,4 @@ class Worley : PApplet() { // TODO: functionalize and move to .demo
 
     }
 }
+
